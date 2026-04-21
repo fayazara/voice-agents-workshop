@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "voice-agent-workshop-demo",
+  "account_id": "e9bc21da719562a3e45d77de7dd042de",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-04-16",
+  "assets": {
+    "not_found_handling": "single-page-application",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "compatibility_flags": ["nodejs_compat"],
+  "ai": {
+    "binding": "AI",
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VoiceAgent",
+        "class_name": "VoiceAgent",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["VoiceAgent"],
+    },
+  ],
+}
