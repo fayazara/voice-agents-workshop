@@ -19,7 +19,10 @@ pnpm dev          # Vite dev server (runs Workers locally via miniflare)
 pnpm build        # tsc -b && vite build
 pnpm deploy       # build + wrangler deploy
 pnpm cf-typegen   # regenerate worker-configuration.d.ts from wrangler.jsonc
+pnpm lint         # eslint
 ```
+
+No tests, no CI, no pre-commit hooks.
 
 ## TypeScript: three tsconfig projects
 
@@ -34,7 +37,15 @@ The `worker/index.ts` file defines its own `Env` interface inline rather than us
 - `AI` — Workers AI binding (always remote, even in local dev)
 - `VoiceAgent` — Durable Object binding (class `VoiceAgent`, SQLite-backed via migrations)
 
-The `account_id` is set in `wrangler.jsonc` to avoid the multi-account prompt in local dev.
+The `account_id` is set in `wrangler.jsonc` to avoid the multi-account prompt in local dev. `nodejs_compat` flag is enabled.
+
+## Key dependencies in worker
+
+- **Vercel AI SDK** (`ai` package) — `generateText` with tool calling, not the Cloudflare AI SDK directly for LLM calls
+- **`workers-ai-provider`** — bridges Vercel AI SDK to Workers AI (`createWorkersAI({ binding: env.AI })`)
+- **Zod v4** (`zod ^4.3.6`) — used for tool input schemas; note this is v4 not v3
+- Current model: `@cf/google/gemma-4-26b-a4b-it` (set in `worker/index.ts`)
+- CRM fixture API: `https://fixtures.fayaz.workers.dev/api` — mock endpoint for orders/products, do not change
 
 ## Voice SDK patterns
 
