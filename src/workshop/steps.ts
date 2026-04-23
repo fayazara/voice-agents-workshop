@@ -79,7 +79,7 @@ export const steps: Step[] = [
     ],
   },
 
-  // ── 1: Prerequisites ──────────────────────────────────────────────────────
+  // ── 2: Prerequisites ──────────────────────────────────────────────────────
   {
     title: "Prerequisites",
     subtitle: "Before we begin",
@@ -98,7 +98,7 @@ export const steps: Step[] = [
     ],
   },
 
-  // ── 2: Architecture Overview ──────────────────────────────────────────────
+  // ── 3: Architecture Overview ──────────────────────────────────────────────
   {
     title: "Architecture Overview",
     subtitle: "How the pieces fit together",
@@ -148,7 +148,69 @@ export const steps: Step[] = [
     ],
   },
 
-  // ── 3: Scaffold & Configure ────────────────────────────────────────────────
+  // ── 4: @cloudflare/voice Overview ──────────────────────────────────────────
+  {
+    title: "@cloudflare/voice",
+    subtitle: "What the SDK gives you out of the box",
+    blocks: [
+      {
+        type: "text",
+        content:
+          "An experimental voice pipeline for the Agents SDK. Voice becomes another way to talk to the same Durable Object, with the same tools, persistence, and WebSocket connection model. No separate voice framework needed.",
+      },
+      {
+        type: "heading",
+        content: "Server & client exports",
+      },
+      {
+        type: "list",
+        items: [
+          "withVoice(Agent) - Full voice agent mixin: STT + LLM + TTS + persistence",
+          "withVoiceInput(Agent) - STT-only mixin: transcription without a response (dictation, voice search)",
+          "useVoiceAgent - React hook for withVoice agents",
+          "useVoiceInput - React hook for withVoiceInput agents",
+          "VoiceClient - Framework-agnostic client (vanilla JS, Vue, Svelte, etc.)",
+        ],
+      },
+      {
+        type: "heading",
+        content: "Built-in Workers AI providers (no API keys)",
+      },
+      {
+        type: "list",
+        items: [
+          "WorkersAIFluxSTT - Continuous STT via @cf/deepgram/flux (best for conversation)",
+          "WorkersAINova3STT - Continuous STT via @cf/deepgram/nova-3 (best for dictation)",
+          "WorkersAITTS - Text-to-speech via @cf/deepgram/aura-1",
+        ],
+      },
+      {
+        type: "heading",
+        content: "Key features",
+      },
+      {
+        type: "list",
+        items: [
+          "Single WebSocket - all audio, transcripts, and messages flow over one connection",
+          "Automatic conversation persistence - messages stored in SQLite, survive restarts and reconnections",
+          "Streaming TTS - LLM tokens are sentence-chunked and synthesized concurrently for fast first-audio",
+          "Interruption handling - user speech during playback cancels the current response via context.signal",
+          "Continuous STT - per-call transcriber session; the model handles turn detection, not the client",
+          "Pipeline hooks - afterTranscribe, beforeSynthesize, afterSynthesize to intercept/transform data",
+          "Lifecycle hooks - beforeCallStart (reject calls), onCallStart, onCallEnd, onInterrupt",
+          "Text input alongside voice - sendText() bypasses STT and goes straight to onTurn()",
+          "Swappable providers - ElevenLabs TTS, Deepgram STT, Twilio telephony, or bring your own",
+        ],
+      },
+      {
+        type: "note",
+        content:
+          "Because a voice agent is still a Durable Object, all normal Agents SDK capabilities still apply: scheduling, state management, multiple connections, and tools. Voice and text share the same state.",
+      },
+    ],
+  },
+
+  // ── 5: Scaffold the Project ────────────────────────────────────────────────
   {
     title: "Step 1 - Scaffold the Project",
     subtitle: "Create a React + Workers app with C3",
@@ -174,7 +236,7 @@ export const steps: Step[] = [
       },
       {
         type: "heading",
-        content: "Add Tailwind CSS v4 via CDN (Just to keep it simple)",
+        content: "Add Tailwind CSS v4 via CDN (just to keep it simple)",
       },
       {
         type: "text",
@@ -190,7 +252,7 @@ export const steps: Step[] = [
     ],
   },
 
-  // ── 4: Configure Wrangler ─────────────────────────────────────────────────
+  // ── 5: Configure Wrangler ─────────────────────────────────────────────────
   {
     title: "Step 2 - Configure Wrangler",
     subtitle: "Add AI, Durable Objects, and voice agent bindings",
@@ -198,33 +260,36 @@ export const steps: Step[] = [
       {
         type: "text",
         content:
-          "The scaffold gives you a basic wrangler.jsonc. Add the following bindings for Workers AI, the Durable Object, and SQLite migrations:",
+          "The scaffold gives you a basic wrangler.jsonc. We need to add the Workers AI binding, declare the Durable Object, and set up SQLite migrations. Here is the complete wrangler.jsonc:",
       },
       {
         type: "code",
         language: "jsonc",
-        filename: "wrangler.jsonc (add these fields)",
+        filename: "wrangler.jsonc",
         content: `{
-  // ... existing scaffold config
+  "name": "voice-agent-workshop",
   "main": "worker/index.ts",
   "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
   "ai": {
-    "binding": "AI",
+    "binding": "AI"
   },
   "durable_objects": {
     "bindings": [
       {
         "name": "VoiceAgent",
-        "class_name": "VoiceAgent",
-      },
-    ],
+        "class_name": "VoiceAgent"
+      }
+    ]
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["VoiceAgent"],
-    },
-  ],
+      "new_sqlite_classes": ["VoiceAgent"]
+    }
+  ]
 }`,
       },
       {
@@ -234,34 +299,31 @@ export const steps: Step[] = [
       {
         type: "list",
         items: [
-          'main - Points to our Worker entry file at worker/index.ts',
-          'nodejs_compat - Required for the agents SDK (uses Node.js APIs)',
-          'ai.binding: "AI" - Creates an AI binding for Workers AI models (STT, LLM, TTS)',
-          "durable_objects - Declares our VoiceAgent Durable Object class",
-          "migrations - Required for Durable Objects with SQLite storage",
+          'main - Points to our Worker entry file at worker/index.ts (create this folder and file next)',
+          'nodejs_compat - Required by the agents SDK (uses Node.js APIs under the hood)',
+          'assets.not_found_handling: "single-page-application" - Serves index.html for all non-API routes so client-side routing works',
+          'ai.binding: "AI" - Creates an AI binding we can use for STT, LLM, and TTS - no API keys needed',
+          "durable_objects - Declares our VoiceAgent class as a Durable Object",
+          "migrations - Required for Durable Objects with SQLite storage (conversation history lives here)",
         ],
       },
       {
         type: "note",
         content:
-          'The class_name must match the class name you export from worker/index.ts. The binding name must also match the name used in the useVoiceAgent hook on the client.',
+          'The class_name "VoiceAgent" must exactly match the class name you export from worker/index.ts. The hook on the client auto-converts PascalCase to kebab-case for the URL path: VoiceAgent → /agents/voice-agent/default.',
       },
     ],
   },
 
-  // ── 5: Build the Voice Agent (Server) ─────────────────────────────────────
+  // ── 6: Minimal Voice Agent (echo) ─────────────────────────────────────────
   {
-    title: "Step 3 - Build the Voice Agent",
-    subtitle: "The server-side voice pipeline",
+    title: "Step 3 - A Minimal Voice Agent",
+    subtitle: "Create worker/index.ts with an echo agent",
     blocks: [
-      {
-        type: "heading",
-        content: "5a. Start with a minimal voice agent",
-      },
       {
         type: "text",
         content:
-          "Let's build incrementally. Start with the absolute minimum - a voice agent that echoes back what you say:",
+          "Let's build incrementally. Create the file worker/index.ts with the absolute minimum - a voice agent that echoes back what you say. This proves the entire voice pipeline works before we add any AI logic.",
       },
       {
         type: "code",
@@ -318,95 +380,399 @@ export default {
           "WorkersAIFluxSTT handles continuous speech-to-text - the model detects when the user stops speaking",
           "WorkersAITTS converts text responses to audio",
           "onCallStart() fires when a user first connects - we use this.speak() to send a greeting",
-          "onTurn() receives the transcript and returns a response string (or stream)",
-          "routeAgentRequest() maps /agents/voice-agent/default to the VoiceAgent Durable Object",
-        ],
-      },
-    ],
-  },
-
-  // ── 8: Add LLM Integration ────────────────────────────────────────────────
-  {
-    title: "Step 3b - Add LLM Integration",
-    subtitle: "Make the agent actually think",
-    blocks: [
-      {
-        type: "text",
-        content:
-          "Replace the echo onTurn method to use Workers AI via the Vercel AI SDK:",
-      },
-      {
-        type: "code",
-        language: "typescript",
-        filename: "worker/index.ts (updated onTurn)",
-        content: `import { generateText } from "ai";
-import { createWorkersAI } from "workers-ai-provider";
-
-// Inside the VoiceAgent class:
-async onTurn(transcript: string, context: VoiceTurnContext) {
-  console.log(\`[onTurn] "\${transcript}"\`);
-
-  const ai = createWorkersAI({ binding: this.env.AI });
-
-  const { text } = await generateText({
-    model: ai("@cf/google/gemma-4-26b-a4b-it"),
-    system:
-      "You are a helpful voice assistant. Keep responses concise - " +
-      "you are being spoken aloud. Do not return Markdown or code blocks.",
-    messages: [
-      ...context.messages.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-      { role: "user" as const, content: transcript },
-    ],
-  });
-
-  console.log(\`[RESPONSE] "\${text}"\`);
-  return text || "Sorry, I couldn't process that. Could you try again?";
-}`,
-      },
-      {
-        type: "heading",
-        content: "Key concepts",
-      },
-      {
-        type: "list",
-        items: [
-          "createWorkersAI() connects the Vercel AI SDK to Workers AI models - no API keys needed",
-          "context.messages gives us SQLite-backed conversation history that survives reconnections",
-          "context.signal aborts the LLM call if the user interrupts",
-          "We use generateText here for simplicity - you could use streamText for faster first-audio time",
+          "onTurn() receives the final transcript and returns a response string - right now it just echoes back",
+          "routeAgentRequest() maps incoming requests to the correct Durable Object by URL pattern",
+          "The default export is the Worker entry point - it routes agent requests or returns 404",
         ],
       },
       {
         type: "note",
         content:
-          "Model note: We're using @cf/google/gemma-4-26b-a4b-it - a fast, capable model on Workers AI. You can swap this for any Workers AI model.",
+          "At this point you can run pnpm dev and test the echo agent with the React client (we'll build that in Step 7). It should greet you and repeat back whatever you say.",
       },
     ],
   },
 
-  // ── 9: Add Tool Calls ─────────────────────────────────────────────────────
+  // ── 7: Add LLM to onTurn ──────────────────────────────────────────────────
   {
-    title: "Step 4 - Add Tool Calls",
-    subtitle: "CRM integration with order lookup, returns, and product search",
+    title: "Step 4 - Add LLM Integration",
+    subtitle: "Replace the echo with an actual AI response",
     blocks: [
       {
         type: "text",
         content:
-          "We'll give the agent tools to look up orders, process returns, and check product stock from a mock CRM API at https://fixtures.fayaz.workers.dev/api",
-      },
-      {
-        type: "heading",
-        content: "Define the tools with Zod schemas",
+          "Now let's make the agent think. We'll replace the echo logic in onTurn with a call to Workers AI via the Vercel AI SDK. Here is the complete updated worker/index.ts - the only changes are: two new imports at the top, and the onTurn method body.",
       },
       {
         type: "code",
         language: "typescript",
-        filename: "worker/index.ts (tools)",
-        content: `import { generateText, stepCountIs, tool } from "ai";
-import { z } from "zod";
+        filename: "worker/index.ts (complete file)",
+        content: `import { Agent, routeAgentRequest } from "agents";
+import {
+  withVoice,
+  WorkersAIFluxSTT,
+  WorkersAITTS,
+  type VoiceTurnContext,
+} from "@cloudflare/voice";
+import { generateText } from "ai";
+import { createWorkersAI } from "workers-ai-provider";
+
+interface Env {
+  AI: Ai;
+  VoiceAgent: DurableObjectNamespace;
+}
+
+const BaseVoiceAgent = withVoice(Agent);
+
+export class VoiceAgent extends BaseVoiceAgent<Env> {
+  transcriber = new WorkersAIFluxSTT(this.env.AI);
+  tts = new WorkersAITTS(this.env.AI);
+
+  async onCallStart() {
+    for (const connection of this.getConnections()) {
+      await this.speak(connection, "Hi there! How can I help you today?");
+    }
+  }
+
+  async onTurn(transcript: string, context: VoiceTurnContext) {
+    console.log(\`[onTurn] "\${transcript}"\`);
+
+    const ai = createWorkersAI({ binding: this.env.AI });
+
+    const { text } = await generateText({
+      model: ai("@cf/google/gemma-4-26b-a4b-it"),
+      system:
+        "You are a helpful voice assistant. Keep responses concise - " +
+        "you are being spoken aloud. Do not return Markdown or code blocks.",
+      messages: [
+        ...context.messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+        { role: "user" as const, content: transcript },
+      ],
+    });
+
+    console.log(\`[RESPONSE] "\${text}"\`);
+    return text || "Sorry, I couldn't process that. Could you try again?";
+  }
+}
+
+export default {
+  async fetch(request: Request, env: Env) {
+    return (
+      (await routeAgentRequest(request, env)) ??
+      new Response("Not found", { status: 404 })
+    );
+  },
+} satisfies ExportedHandler<Env>;`,
+      },
+      {
+        type: "heading",
+        content: "What changed from Step 3",
+      },
+      {
+        type: "list",
+        items: [
+          'Added imports: generateText from "ai" and createWorkersAI from "workers-ai-provider"',
+          "createWorkersAI() bridges the Vercel AI SDK to Workers AI - no API keys needed, it uses the AI binding directly",
+          "context.messages gives us SQLite-backed conversation history that survives reconnections",
+          'We pass a system prompt telling the LLM to keep responses concise and avoid Markdown (since this is voice output)',
+          "The model @cf/google/gemma-4-26b-a4b-it is fast and capable - you can swap it for any Workers AI model",
+        ],
+      },
+      {
+        type: "note",
+        content:
+          "Try it now! Run pnpm dev, start a call, and ask it a general question. It should respond intelligently instead of just echoing. Next we'll give it tools to look up real data.",
+      },
+    ],
+  },
+
+  // ── 8: System Prompt ──────────────────────────────────────────────────────
+  {
+    title: "Step 5 - The System Prompt",
+    subtitle: "Teaching the LLM to handle voice transcripts",
+    blocks: [
+      {
+        type: "text",
+        content:
+          "Before we add tools, we need a proper system prompt. Voice agents have a unique challenge: when users say \"order nine eight three one\", the STT model transcribes it as words, not digits. The system prompt must teach the LLM to convert these to the format ORD-9831 before calling tools.",
+      },
+      {
+        type: "text",
+        content:
+          "Add this constant above the VoiceAgent class in worker/index.ts. We will reference it in the next step when we wire everything together.",
+      },
+      {
+        type: "code",
+        language: "typescript",
+        filename: "worker/index.ts (add above the VoiceAgent class)",
+        content: `const SYSTEM_PROMPT = \`You are a friendly customer support voice assistant for Acme Inc, an online store.
+
+You have tools to look up orders, start returns, and check product availability. USE THEM - do not make up info.
+
+
+IMPORTANT - SPEECH-TO-TEXT:
+Users speak their order number, so transcripts contain spoken words not digits.
+Order IDs look like "ORD-" followed by 4 digits (e.g. ORD-9831, ORD-8916).
+Convert spoken numbers to digits and prepend "ORD-" before calling tools:
+- "nine eight three one" or "ninety-eight thirty-one" → "ORD-9831"
+- "eight nine one six" → "ORD-8916"
+If the user only says digits without "ORD", still format as "ORD-XXXX".
+
+Keep responses SHORT and conversational. After tool results, summarize naturally.
+Don't read out full addresses or long lists - give the key info.
+Do not return Markdown or code blocks in your responses.\`;`,
+      },
+      {
+        type: "heading",
+        content: "Why this prompt matters for voice",
+      },
+      {
+        type: "list",
+        items: [
+          "STT outputs words, not digits - \"nine eight three one\" must become ORD-9831",
+          "We tell the LLM to USE the tools and not make up info - hallucinated order statuses are bad",
+          'We tell it to keep responses SHORT - nobody wants a 3-paragraph answer read aloud',
+          'We say no Markdown - bold text and bullet points don\'t make sense when spoken',
+        ],
+      },
+    ],
+  },
+
+  // ── 9: CRM Helper Functions ───────────────────────────────────────────────
+  {
+    title: "Step 6a - CRM API Helper Functions",
+    subtitle: "Functions to call our mock e-commerce API",
+    blocks: [
+      {
+        type: "text",
+        content:
+          "Our agent needs to look up orders, process returns, and check product stock. We'll call a mock CRM API at https://fixtures.fayaz.workers.dev/api. Add these types and functions to worker/index.ts, right after the Env interface.",
+      },
+      {
+        type: "code",
+        language: "typescript",
+        filename: "worker/index.ts (add after the Env interface)",
+        content: `// ─── CRM API Types & Client ──────────────────────────────────────────────
+
+const CRM_API_BASE = "https://fixtures.fayaz.workers.dev/api";
+
+type OrderItem = {
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+};
+
+type Order = {
+  id: number;
+  orderNumber: string;
+  userId: number;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  total: number;
+  shippingAddress: string;
+  items: OrderItem[];
+  createdAt: string;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  imageUrl: string;
+  sku: string;
+  stock: number;
+  rating: number;
+  brand: string;
+  createdAt: string;
+};
+
+type Paginated<T> = {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+async function fetchOrderByNumber(
+  orderNumber: string,
+): Promise<Order | null> {
+  const url =
+    \`\${CRM_API_BASE}/orders?search=\${encodeURIComponent(orderNumber)}\`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const body = (await res.json()) as Paginated<Order>;
+  const exact = body.data.find(
+    (o) => o.orderNumber.toUpperCase() === orderNumber.toUpperCase(),
+  );
+  return exact ?? body.data[0] ?? null;
+}`,
+      },
+      {
+        type: "note",
+        content:
+          "This is a mock API - it returns fixed demo data. In a real app, you'd call your actual order management system here.",
+      },
+    ],
+  },
+
+  // ── 10: Tool Execute Functions ────────────────────────────────────────────
+  {
+    title: "Step 6b - Tool Execute Functions",
+    subtitle: "The logic behind each tool the LLM can call",
+    blocks: [
+      {
+        type: "text",
+        content:
+          "Each tool the LLM calls needs an execute function that does the actual work. These functions call the CRM API and return structured results. Add these right after the fetchOrderByNumber function.",
+      },
+      {
+        type: "code",
+        language: "typescript",
+        filename: "worker/index.ts (add after fetchOrderByNumber)",
+        content: `// ─── Tool Execute Functions ──────────────────────────────────────────────
+
+async function lookupOrder(orderId: string) {
+  const normalized = orderId.toUpperCase().trim();
+  try {
+    const order = await fetchOrderByNumber(normalized);
+    if (!order) {
+      return {
+        found: false,
+        message: \`No order found with ID \${normalized}.\`,
+      };
+    }
+    return {
+      found: true,
+      id: order.orderNumber,
+      status: order.status,
+      items: order.items.map(
+        (i) => \`\${i.quantity}x \${i.productName} ($\${i.price})\`,
+      ),
+      total: order.total.toFixed(2),
+      shipping_address: order.shippingAddress,
+      created_at: order.createdAt,
+    };
+  } catch (err) {
+    console.error("[lookupOrder] error", err);
+    return {
+      found: false,
+      message: "Could not reach the orders service right now.",
+    };
+  }
+}
+
+async function requestReturn(orderId: string, reason: string) {
+  const normalized = orderId.toUpperCase().trim();
+  try {
+    const order = await fetchOrderByNumber(normalized);
+    if (!order) {
+      return {
+        success: false,
+        message: \`No order found with ID \${normalized}.\`,
+      };
+    }
+    if (order.status !== "delivered") {
+      return {
+        success: false,
+        message: \`Order \${normalized} cannot be returned - status is "\${order.status}".\`,
+      };
+    }
+    const returnId = \`RET-\${Math.floor(1000 + Math.random() * 9000)}\`;
+    return {
+      success: true,
+      return_id: returnId,
+      order_id: normalized,
+      reason,
+      instructions:
+        "A prepaid return label has been emailed. Ship items back within 14 days. Refund in 3-5 business days.",
+    };
+  } catch (err) {
+    console.error("[requestReturn] error", err);
+    return {
+      success: false,
+      message: "Could not reach the orders service right now.",
+    };
+  }
+}
+
+async function checkProduct(productName: string) {
+  const query = productName.trim();
+  try {
+    const url = \`\${CRM_API_BASE}/products?search=\${encodeURIComponent(query)}&limit=5\`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      return {
+        found: false,
+        message: \`No product found matching "\${productName}".\`,
+      };
+    }
+    const body = (await res.json()) as Paginated<Product>;
+    const p = body.data[0];
+    if (!p) {
+      return {
+        found: false,
+        message: \`No product found matching "\${productName}".\`,
+      };
+    }
+    return {
+      found: true,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      price: \`$\${p.price}\`,
+      in_stock: p.stock > 0,
+      stock_count: p.stock,
+    };
+  } catch (err) {
+    console.error("[checkProduct] error", err);
+    return {
+      found: false,
+      message: "Could not reach the products service right now.",
+    };
+  }
+}`,
+      },
+      {
+        type: "heading",
+        content: "What each function does",
+      },
+      {
+        type: "list",
+        items: [
+          "lookupOrder - Finds an order by ID and returns its status, items, and total",
+          "requestReturn - Validates the order is delivered, then generates a return ID with instructions",
+          "checkProduct - Searches products by name and returns price, stock, and brand info",
+          "All three normalize input, handle errors gracefully, and return structured objects the LLM can summarize",
+        ],
+      },
+    ],
+  },
+
+  // ── 11: Tool Definitions ──────────────────────────────────────────────────
+  {
+    title: "Step 6c - Define Tools with Zod Schemas",
+    subtitle: "Give the LLM typed tools it can call",
+    blocks: [
+      {
+        type: "text",
+        content:
+          "Now we define the tools the LLM can call using the Vercel AI SDK's tool() helper and Zod schemas. The LLM sees each tool's description and schema, decides when to call them, and we execute them with the functions from the previous step. Add these after the tool execute functions.",
+      },
+      {
+        type: "code",
+        language: "typescript",
+        filename: "worker/index.ts (add after the tool execute functions)",
+        content: `// ─── Add these imports at the top of the file ──────────────────────────
+// import { generateText, stepCountIs, tool } from "ai";
+// import { z } from "zod";
+// (replace your existing "import { generateText } from 'ai'" line)
+
+// ─── Tool Definitions ────────────────────────────────────────────────────
 
 const ecomTools = {
   lookup_order: tool({
@@ -425,7 +791,8 @@ const ecomTools = {
       order_id: z.string().describe("The order ID to return"),
       reason: z.string().describe("Reason for the return"),
     }),
-    execute: async ({ order_id, reason }) => requestReturn(order_id, reason),
+    execute: async ({ order_id, reason }) =>
+      requestReturn(order_id, reason),
   }),
   check_product_availability: tool({
     description: "Check if a product is in stock and get pricing.",
@@ -438,49 +805,245 @@ const ecomTools = {
       },
       {
         type: "heading",
-        content: "Wire tools into onTurn",
+        content: "How AI tool calling works",
       },
       {
-        type: "code",
-        language: "typescript",
-        content: `const { text, steps } = await generateText({
-  model: ai("@cf/google/gemma-4-26b-a4b-it"),
-  system: SYSTEM_PROMPT,
-  messages: [
-    ...context.messages.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-    { role: "user" as const, content: transcript },
-  ],
-  tools: ecomTools,
-  // Allow up to 5 tool-call steps before forcing a final response
-  stopWhen: stepCountIs(5),
-});`,
-      },
-      {
-        type: "note",
-        content:
-          "stepCountIs(5) caps tool-call iterations at 5 to prevent runaway loops. The LLM might need multiple steps - call a tool, get the result, then call another tool or generate the final response.",
+        type: "list",
+        items: [
+          "The LLM sees the tool name, description, and Zod schema - it decides IF and WHEN to call a tool",
+          "When the LLM wants to call a tool, it outputs a structured tool call with the right arguments",
+          "The Vercel AI SDK automatically runs the execute function and feeds the result back to the LLM",
+          "The LLM then uses the tool result to generate a natural language response",
+          "This can happen multiple times in a single turn (e.g., look up order then start a return)",
+        ],
       },
     ],
   },
 
-  // ── 10: System Prompt ─────────────────────────────────────────────────────
+  // ── 12: Complete worker/index.ts ──────────────────────────────────────────
   {
-    title: "Step 4b - The System Prompt",
-    subtitle: "Teaching the LLM to handle voice transcripts",
+    title: "Step 7 - The Complete Voice Agent",
+    subtitle: "Putting it all together - the final worker/index.ts",
     blocks: [
       {
         type: "text",
         content:
-          'When users say "order nine eight three one", the STT model transcribes it as words, not digits. The system prompt teaches the LLM to convert these to the format ORD-9831 before calling tools. This is a critical real-world pattern for voice agents.',
+          "Here is the complete worker/index.ts with everything wired together: imports, types, CRM functions, tools, system prompt, and the VoiceAgent class. Copy this as your final file.",
       },
       {
         type: "code",
         language: "typescript",
-        filename: "worker/index.ts",
-        content: `const SYSTEM_PROMPT = \`You are a friendly customer support voice assistant for Acme Inc, an online store.
+        filename: "worker/index.ts (complete file)",
+        content: `import { Agent, routeAgentRequest } from "agents";
+import {
+  withVoice,
+  WorkersAIFluxSTT,
+  WorkersAITTS,
+  type VoiceTurnContext,
+} from "@cloudflare/voice";
+import { generateText, stepCountIs, tool } from "ai";
+import { createWorkersAI } from "workers-ai-provider";
+import { z } from "zod";
+
+interface Env {
+  AI: Ai;
+  VoiceAgent: DurableObjectNamespace;
+}
+
+// ─── CRM API Client ─────────────────────────────────────────────────────
+
+const CRM_API_BASE = "https://fixtures.fayaz.workers.dev/api";
+
+type OrderItem = {
+  productId: number;
+  productName: string;
+  quantity: number;
+  price: number;
+};
+
+type Order = {
+  id: number;
+  orderNumber: string;
+  userId: number;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  total: number;
+  shippingAddress: string;
+  items: OrderItem[];
+  createdAt: string;
+};
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  imageUrl: string;
+  sku: string;
+  stock: number;
+  rating: number;
+  brand: string;
+  createdAt: string;
+};
+
+type Paginated<T> = {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+async function fetchOrderByNumber(
+  orderNumber: string,
+): Promise<Order | null> {
+  const url =
+    \`\${CRM_API_BASE}/orders?search=\${encodeURIComponent(orderNumber)}\`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const body = (await res.json()) as Paginated<Order>;
+  const exact = body.data.find(
+    (o) => o.orderNumber.toUpperCase() === orderNumber.toUpperCase(),
+  );
+  return exact ?? body.data[0] ?? null;
+}
+
+// ─── Tool Execute Functions ──────────────────────────────────────────────
+
+async function lookupOrder(orderId: string) {
+  const normalized = orderId.toUpperCase().trim();
+  try {
+    const order = await fetchOrderByNumber(normalized);
+    if (!order) {
+      return {
+        found: false,
+        message: \`No order found with ID \${normalized}.\`,
+      };
+    }
+    return {
+      found: true,
+      id: order.orderNumber,
+      status: order.status,
+      items: order.items.map(
+        (i) => \`\${i.quantity}x \${i.productName} ($\${i.price})\`,
+      ),
+      total: order.total.toFixed(2),
+      shipping_address: order.shippingAddress,
+      created_at: order.createdAt,
+    };
+  } catch (err) {
+    console.error("[lookupOrder] error", err);
+    return {
+      found: false,
+      message: "Could not reach the orders service right now.",
+    };
+  }
+}
+
+async function requestReturn(orderId: string, reason: string) {
+  const normalized = orderId.toUpperCase().trim();
+  try {
+    const order = await fetchOrderByNumber(normalized);
+    if (!order) {
+      return {
+        success: false,
+        message: \`No order found with ID \${normalized}.\`,
+      };
+    }
+    if (order.status !== "delivered") {
+      return {
+        success: false,
+        message: \`Order \${normalized} cannot be returned - status is "\${order.status}".\`,
+      };
+    }
+    const returnId = \`RET-\${Math.floor(1000 + Math.random() * 9000)}\`;
+    return {
+      success: true,
+      return_id: returnId,
+      order_id: normalized,
+      reason,
+      instructions:
+        "A prepaid return label has been emailed. Ship items back within 14 days. Refund in 3-5 business days.",
+    };
+  } catch (err) {
+    console.error("[requestReturn] error", err);
+    return {
+      success: false,
+      message: "Could not reach the orders service right now.",
+    };
+  }
+}
+
+async function checkProduct(productName: string) {
+  const query = productName.trim();
+  try {
+    const url = \`\${CRM_API_BASE}/products?search=\${encodeURIComponent(query)}&limit=5\`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      return {
+        found: false,
+        message: \`No product found matching "\${productName}".\`,
+      };
+    }
+    const body = (await res.json()) as Paginated<Product>;
+    const p = body.data[0];
+    if (!p) {
+      return {
+        found: false,
+        message: \`No product found matching "\${productName}".\`,
+      };
+    }
+    return {
+      found: true,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      price: \`$\${p.price}\`,
+      in_stock: p.stock > 0,
+      stock_count: p.stock,
+    };
+  } catch (err) {
+    console.error("[checkProduct] error", err);
+    return {
+      found: false,
+      message: "Could not reach the products service right now.",
+    };
+  }
+}
+
+// ─── Tool Definitions ────────────────────────────────────────────────────
+
+const ecomTools = {
+  lookup_order: tool({
+    description:
+      "Look up an order by its order ID (e.g. ORD-1024). " +
+      "Use when customer asks about order status, tracking, or delivery.",
+    inputSchema: z.object({
+      order_id: z.string().describe("The order ID, e.g. ORD-1024"),
+    }),
+    execute: async ({ order_id }) => lookupOrder(order_id),
+  }),
+  request_return: tool({
+    description:
+      "Start a return for a delivered order. Only delivered orders can be returned.",
+    inputSchema: z.object({
+      order_id: z.string().describe("The order ID to return"),
+      reason: z.string().describe("Reason for the return"),
+    }),
+    execute: async ({ order_id, reason }) =>
+      requestReturn(order_id, reason),
+  }),
+  check_product_availability: tool({
+    description: "Check if a product is in stock and get pricing.",
+    inputSchema: z.object({
+      product_name: z.string().describe("Product name to search for"),
+    }),
+    execute: async ({ product_name }) => checkProduct(product_name),
+  }),
+};
+
+// ─── System Prompt ───────────────────────────────────────────────────────
+
+const SYSTEM_PROMPT = \`You are a friendly customer support voice assistant for Acme Inc, an online store.
 
 You have tools to look up orders, start returns, and check product availability. USE THEM - do not make up info.
 
@@ -495,19 +1058,97 @@ If the user only says digits without "ORD", still format as "ORD-XXXX".
 
 Keep responses SHORT and conversational. After tool results, summarize naturally.
 Don't read out full addresses or long lists - give the key info.
-Do not return Markdown or code blocks in your responses.\`;`,
+Do not return Markdown or code blocks in your responses.\`;
+
+// ─── Voice Agent ─────────────────────────────────────────────────────────
+
+const BaseVoiceAgent = withVoice(Agent);
+
+export class VoiceAgent extends BaseVoiceAgent<Env> {
+  transcriber = new WorkersAIFluxSTT(this.env.AI);
+  tts = new WorkersAITTS(this.env.AI);
+
+  async onCallStart() {
+    for (const connection of this.getConnections()) {
+      await this.speak(
+        connection,
+        "Hi there! Welcome to Acme support. I can help you track an order, start a return, or check if a product is in stock. What can I do for you?",
+      );
+    }
+  }
+
+  async onTurn(transcript: string, context: VoiceTurnContext) {
+    console.log(\`[onTurn] "\${transcript}"\`);
+
+    const ai = createWorkersAI({ binding: this.env.AI });
+
+    const { text, steps } = await generateText({
+      model: ai("@cf/google/gemma-4-26b-a4b-it"),
+      system: SYSTEM_PROMPT,
+      messages: [
+        ...context.messages.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+        { role: "user" as const, content: transcript },
+      ],
+      tools: ecomTools,
+      stopWhen: stepCountIs(5),
+    });
+
+    for (const step of steps) {
+      for (const tc of step.toolCalls) {
+        console.log(\`[TOOL] \${tc.toolName}(\${JSON.stringify(tc.input)})\`);
+      }
+      for (const tr of step.toolResults) {
+        console.log(
+          \`[RESULT] \${tr.toolName} →\`,
+          JSON.stringify(tr.output),
+        );
+      }
+    }
+    console.log(\`[RESPONSE] "\${text}"\`);
+
+    return text || "Sorry, I couldn't process that. Could you try again?";
+  }
+}
+
+// ─── Worker Entry ────────────────────────────────────────────────────────
+
+export default {
+  async fetch(request: Request, env: Env) {
+    return (
+      (await routeAgentRequest(request, env)) ??
+      new Response("Not found", { status: 404 })
+    );
+  },
+} satisfies ExportedHandler<Env>;`,
+      },
+      {
+        type: "heading",
+        content: "What's new in this final version",
+      },
+      {
+        type: "list",
+        items: [
+          "tools: ecomTools - passes the three tools to generateText so the LLM can call them",
+          "stopWhen: stepCountIs(5) - caps tool-call iterations at 5 to prevent runaway loops",
+          "The LLM can chain tools: look up an order, then start a return, in a single conversation turn",
+          "Tool call and result logging - watch the terminal for [TOOL] and [RESULT] logs during testing",
+          "Greeting updated to mention all three capabilities so users know what to ask",
+        ],
       },
     ],
   },
 
-  // ── 11: Build the React Client ────────────────────────────────────────────
+  // ── 13: Build the React Client ────────────────────────────────────────────
   {
-    title: "Step 5 - Build the React Client",
-    subtitle: "The voice UI with useVoiceAgent hook",
+    title: "Step 8 - Build the React Client",
+    subtitle: "The useVoiceAgent hook - the entire client API",
     blocks: [
       {
         type: "heading",
-        content: "HTML shell with Tailwind CSS v4 CDN",
+        content: "index.html",
       },
       {
         type: "code",
@@ -529,7 +1170,12 @@ Do not return Markdown or code blocks in your responses.\`;`,
       },
       {
         type: "heading",
-        content: "The useVoiceAgent hook - the entire client API",
+        content: "The useVoiceAgent hook",
+      },
+      {
+        type: "text",
+        content:
+          'The @cloudflare/voice/react package gives us useVoiceAgent - a single hook that manages the entire client-side voice connection. It opens a WebSocket, streams audio, and gives us reactive state. Here is a minimal but functional App.tsx:',
       },
       {
         type: "code",
@@ -539,34 +1185,75 @@ Do not return Markdown or code blocks in your responses.\`;`,
 
 function App() {
   const {
-    status,           // "idle" | "listening" | "thinking" | "speaking"
-    transcript,       // Array of { role: "user"|"agent", text: string }
-    interimTranscript,// Partial transcript while user is still speaking
-    audioLevel,       // 0-1 mic volume (for visualizations)
-    isMuted,          // Whether the mic is muted
-    startCall,        // Function to start the call
-    endCall,          // Function to end the call
-    toggleMute,       // Function to toggle mic mute
+    status,            // "idle" | "listening" | "thinking" | "speaking"
+    transcript,        // Array of { role: "user"|"agent", text: string }
+    interimTranscript, // Partial text while user is still speaking
+    audioLevel,        // 0-1 mic volume (for visualizations)
+    isMuted,           // Whether the mic is muted
+    startCall,         // Function to start the voice call
+    endCall,           // Function to hang up
+    toggleMute,        // Function to toggle mic mute
   } = useVoiceAgent({ agent: "VoiceAgent" });
 
   const isActive = status !== "idle";
 
   return (
-    <div>
-      <button onClick={isActive ? endCall : startCall}>
-        {isActive ? "Hang up" : "Start call"}
+    <div className="flex h-screen flex-col items-center justify-center gap-6 p-6">
+      <h1 className="text-2xl font-semibold">Cloudflare Voice Agent</h1>
+
+      {/* Call / Hang up button */}
+      <button
+        onClick={isActive ? endCall : startCall}
+        className={\`px-6 py-3 rounded-full text-white font-medium \${
+          isActive
+            ? "bg-red-500 hover:bg-red-600"
+            : "bg-green-500 hover:bg-green-600"
+        }\`}
+      >
+        {isActive ? "Hang up" : "Start Call"}
       </button>
 
-      {transcript.map((msg, i) => (
-        <div key={i}>
-          <strong>{msg.role}:</strong> {msg.text}
-        </div>
-      ))}
+      {/* Status */}
+      {isActive && (
+        <p className="text-sm text-neutral-500">
+          Status: <span className="font-medium">{status}</span>
+        </p>
+      )}
 
-      {interimTranscript && <div><em>{interimTranscript}</em></div>}
+      {/* Transcript */}
+      <div className="w-full max-w-md space-y-2">
+        {transcript.map((msg, i) => (
+          <div
+            key={i}
+            className={\`flex \${
+              msg.role === "user" ? "justify-end" : "justify-start"
+            }\`}
+          >
+            <span
+              className={\`rounded-2xl px-4 py-2 text-sm \${
+                msg.role === "user"
+                  ? "bg-orange-500 text-white"
+                  : "bg-neutral-200 text-neutral-800"
+              }\`}
+            >
+              {msg.text}
+            </span>
+          </div>
+        ))}
+
+        {interimTranscript && (
+          <div className="flex justify-end">
+            <span className="rounded-2xl bg-orange-500/60 px-4 py-2 text-sm italic text-white">
+              {interimTranscript}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
-}`,
+}
+
+export default App;`,
       },
       {
         type: "heading",
@@ -575,19 +1262,20 @@ function App() {
       {
         type: "list",
         items: [
-          'useVoiceAgent({ agent: "VoiceAgent" }) - agent name must match the exported class name. The hook auto-converts PascalCase → kebab-case for the URL',
-          "status cycles: idle → listening → thinking → speaking → listening - this is all you need for UI state",
-          "transcript is an array of finalized messages - both user and agent",
-          "interimTranscript shows what the STT model is hearing in real-time",
-          "audioLevel gives a 0–1 value for mic volume - great for visualizations",
+          'useVoiceAgent({ agent: "VoiceAgent" }) - the agent name must match the exported class name in worker/index.ts',
+          "The hook auto-converts PascalCase to kebab-case for the WebSocket URL: VoiceAgent → /agents/voice-agent/default",
+          "status cycles: idle → listening → thinking → speaking → listening (this is all you need for UI state)",
+          "transcript is an array of finalized messages from both user and agent",
+          "interimTranscript shows what the STT model is hearing in real-time before the utterance is finalized",
+          "audioLevel (0-1) is great for building mic volume visualizers",
         ],
       },
     ],
   },
 
-  // ── 12: Run and Test ──────────────────────────────────────────────────────
+  // ── 14: Run and Test ──────────────────────────────────────────────────────
   {
-    title: "Step 6 - Run and Test",
+    title: "Step 9 - Run and Test",
     subtitle: "Start the dev server and try it out",
     blocks: [
       {
@@ -619,24 +1307,24 @@ function App() {
       {
         type: "list",
         items: [
-          "The status badge changes: Listening (green) → Thinking (yellow) → Speaking (blue)",
-          "The audio level bars react to your voice in real-time",
-          "Interim transcripts appear while you're still speaking",
-          "Final transcripts appear as solid message bubbles once finalized",
+          "The agent greets you when the call starts (onCallStart)",
+          "Interim transcripts appear in real-time as you speak",
+          "The status changes: Listening → Thinking → Speaking",
+          "Final transcripts appear as solid message bubbles",
           "Watch the terminal for [TOOL] and [RESULT] logs showing tool calls in action",
         ],
       },
       {
         type: "note",
         content:
-          "Even in local dev, the AI binding hits remote Cloudflare APIs. You need valid Cloudflare auth (wrangler login) and will incur usage - but it's included in the free plan.",
+          "Even in local dev, the AI binding hits remote Cloudflare APIs. You need valid Cloudflare auth (wrangler login) and will incur usage - but Workers AI has a generous free tier.",
       },
     ],
   },
 
-  // ── 13: Deploy ────────────────────────────────────────────────────────────
+  // ── 15: Deploy ────────────────────────────────────────────────────────────
   {
-    title: "Step 7 - Deploy to Cloudflare",
+    title: "Step 10 - Deploy to Cloudflare",
     subtitle: "Ship it globally",
     blocks: [
       {
@@ -698,7 +1386,7 @@ function App() {
     ],
   },
 
-  // ── 14: Bonus ─────────────────────────────────────────────────────────────
+  // ── 16: Bonus ─────────────────────────────────────────────────────────────
   {
     title: "Bonus: Pipeline Hooks & Third-Party Providers",
     subtitle: "Extend the voice pipeline",
@@ -778,14 +1466,14 @@ export class DictationAgent extends InputAgent<Env> {
     ],
   },
 
-  // ── 15: Resources & Links ──────────────────────────────────────────────────
+  // ── 17: Resources & Links ──────────────────────────────────────────────────
   {
     title: "Thank You!",
     subtitle: "Resources & Links",
     blocks: [
       {
         type: "resources",
-        qrUrl: "https://voice-agent.fayaz.workers.dev/#/workshop/14",
+        qrUrl: "https://voice-agent.fayaz.workers.dev/#/workshop/18",
         links: [
           {
             label: "GitHub Codebase",
