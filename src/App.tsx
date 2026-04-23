@@ -57,7 +57,7 @@ function App() {
   return (
     <div className="flex h-screen flex-col bg-neutral-50 text-neutral-900">
       <div className="mx-auto flex h-full w-full max-w-xl flex-col p-6 gap-6">
-        {/* Top half — title + call button */}
+        {/* Top half - title + call button */}
         <section className="flex flex-col items-center justify-center gap-5 rounded-2xl bg-white p-6">
           <div className="text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
@@ -150,7 +150,7 @@ function App() {
           )}
         </section>
 
-        {/* Bottom half — transcript */}
+        {/* Bottom half - transcript */}
         <section className="flex flex-1 min-h-0 flex-col overflow-hidden pb-6">
           <div
             className="flex-1 space-y-3 overflow-y-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

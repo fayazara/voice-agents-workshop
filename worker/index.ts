@@ -112,7 +112,7 @@ async function requestReturn(orderId: string, reason: string) {
     if (order.status !== "delivered") {
       return {
         success: false,
-        message: `Order ${normalized} cannot be returned — status is "${order.status}".`,
+        message: `Order ${normalized} cannot be returned - status is "${order.status}".`,
       };
     }
     const returnId = `RET-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -205,10 +205,10 @@ const BaseVoiceAgent = withVoice(Agent);
 
 const SYSTEM_PROMPT = `You are a friendly customer support voice assistant for Acme Inc, an online store.
 
-You have tools to look up orders, start returns, and check product availability. USE THEM — do not make up info.
+You have tools to look up orders, start returns, and check product availability. USE THEM - do not make up info.
 
 
-IMPORTANT — SPEECH-TO-TEXT:
+IMPORTANT - SPEECH-TO-TEXT:
 Users speak their order number, so transcripts contain spoken words not digits.
 Order IDs look like "ORD-" followed by 4 digits (e.g. ORD-9831, ORD-8916).
 Convert spoken numbers to digits and prepend "ORD-" before calling tools:
@@ -216,7 +216,7 @@ Convert spoken numbers to digits and prepend "ORD-" before calling tools:
 - "eight nine one six" → "ORD-8916"
 If the user only says digits without "ORD", still format as "ORD-XXXX".
 
-Keep responses SHORT and conversational. After tool results, summarize naturally. Don't read out full addresses or long lists — give the key info. Do not return Markdown or code blocks in your responses.`;
+Keep responses SHORT and conversational. After tool results, summarize naturally. Don't read out full addresses or long lists - give the key info. Do not return Markdown or code blocks in your responses.`;
 
 export class VoiceAgent extends BaseVoiceAgent<Env> {
   transcriber = new WorkersAIFluxSTT(this.env.AI);

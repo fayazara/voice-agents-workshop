@@ -39,8 +39,8 @@ This starts a local Vite dev server with Workers running via Miniflare. Open the
 ## Project Structure
 
 ```
-worker/index.ts   # Workers entry point — VoiceAgent Durable Object + fetch handler
-src/App.tsx       # React SPA — voice UI with useVoiceAgent hook
+worker/index.ts   # Workers entry point - VoiceAgent Durable Object + fetch handler
+src/App.tsx       # React SPA - voice UI with useVoiceAgent hook
 src/main.tsx      # React entry point
 index.html        # HTML shell (includes Tailwind v4 CDN)
 wrangler.jsonc    # Cloudflare Workers configuration

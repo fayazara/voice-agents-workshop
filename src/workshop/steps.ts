@@ -49,7 +49,7 @@ export const steps: Step[] = [
       {
         type: "text",
         content:
-          'A voice-powered customer support agent for a fictional e-commerce store called "Acme Inc." Users speak into their microphone, the agent transcribes their speech in real-time, calls an LLM to generate a response, and speaks the answer back — all over a single WebSocket connection.',
+          'A voice-powered customer support agent for a fictional e-commerce store called "Acme Inc." Users speak into their microphone, the agent transcribes their speech in real-time, calls an LLM to generate a response, and speaks the answer back - all over a single WebSocket connection.',
       },
       {
         type: "heading",
@@ -87,11 +87,11 @@ export const steps: Step[] = [
       {
         type: "list",
         items: [
-          "A Cloudflare account — sign up at dash.cloudflare.com",
-          "Workers AI access (included in the free plan — no extra setup)",
-          "Node.js 18+ installed — check with: node --version",
-          "pnpm installed — npm install -g pnpm",
-          "Wrangler CLI authenticated — run: wrangler login",
+          "A Cloudflare account - sign up at dash.cloudflare.com",
+          "Workers AI access (included in the free plan - no extra setup)",
+          "Node.js 18+ installed - check with: node --version",
+          "pnpm installed - npm install -g pnpm",
+          "Wrangler CLI authenticated - run: wrangler login",
           "A microphone (built-in or external)",
         ],
       },
@@ -143,14 +143,14 @@ export const steps: Step[] = [
       {
         type: "note",
         content:
-          "Key insight: Every voice agent is a Durable Object — a stateful, addressable server instance with its own SQLite database, WebSocket connections, and application logic. The voice pipeline extends this model instead of replacing it.",
+          "Key insight: Every voice agent is a Durable Object - a stateful, addressable server instance with its own SQLite database, WebSocket connections, and application logic. The voice pipeline extends this model instead of replacing it.",
       },
     ],
   },
 
   // ── 3: Scaffold & Configure ────────────────────────────────────────────────
   {
-    title: "Step 1 — Scaffold the Project",
+    title: "Step 1 - Scaffold the Project",
     subtitle: "Create a React + Workers app with C3",
     blocks: [
       {
@@ -192,7 +192,7 @@ export const steps: Step[] = [
 
   // ── 4: Configure Wrangler ─────────────────────────────────────────────────
   {
-    title: "Step 2 — Configure Wrangler",
+    title: "Step 2 - Configure Wrangler",
     subtitle: "Add AI, Durable Objects, and voice agent bindings",
     blocks: [
       {
@@ -234,11 +234,11 @@ export const steps: Step[] = [
       {
         type: "list",
         items: [
-          'main — Points to our Worker entry file at worker/index.ts',
-          'nodejs_compat — Required for the agents SDK (uses Node.js APIs)',
-          'ai.binding: "AI" — Creates an AI binding for Workers AI models (STT, LLM, TTS)',
-          "durable_objects — Declares our VoiceAgent Durable Object class",
-          "migrations — Required for Durable Objects with SQLite storage",
+          'main - Points to our Worker entry file at worker/index.ts',
+          'nodejs_compat - Required for the agents SDK (uses Node.js APIs)',
+          'ai.binding: "AI" - Creates an AI binding for Workers AI models (STT, LLM, TTS)',
+          "durable_objects - Declares our VoiceAgent Durable Object class",
+          "migrations - Required for Durable Objects with SQLite storage",
         ],
       },
       {
@@ -251,7 +251,7 @@ export const steps: Step[] = [
 
   // ── 5: Build the Voice Agent (Server) ─────────────────────────────────────
   {
-    title: "Step 3 — Build the Voice Agent",
+    title: "Step 3 - Build the Voice Agent",
     subtitle: "The server-side voice pipeline",
     blocks: [
       {
@@ -261,7 +261,7 @@ export const steps: Step[] = [
       {
         type: "text",
         content:
-          "Let's build incrementally. Start with the absolute minimum — a voice agent that echoes back what you say:",
+          "Let's build incrementally. Start with the absolute minimum - a voice agent that echoes back what you say:",
       },
       {
         type: "code",
@@ -315,9 +315,9 @@ export default {
         type: "list",
         items: [
           "withVoice(Agent) is a mixin that adds the entire voice pipeline to a standard Agent class",
-          "WorkersAIFluxSTT handles continuous speech-to-text — the model detects when the user stops speaking",
+          "WorkersAIFluxSTT handles continuous speech-to-text - the model detects when the user stops speaking",
           "WorkersAITTS converts text responses to audio",
-          "onCallStart() fires when a user first connects — we use this.speak() to send a greeting",
+          "onCallStart() fires when a user first connects - we use this.speak() to send a greeting",
           "onTurn() receives the transcript and returns a response string (or stream)",
           "routeAgentRequest() maps /agents/voice-agent/default to the VoiceAgent Durable Object",
         ],
@@ -327,7 +327,7 @@ export default {
 
   // ── 8: Add LLM Integration ────────────────────────────────────────────────
   {
-    title: "Step 3b — Add LLM Integration",
+    title: "Step 3b - Add LLM Integration",
     subtitle: "Make the agent actually think",
     blocks: [
       {
@@ -351,7 +351,7 @@ async onTurn(transcript: string, context: VoiceTurnContext) {
   const { text } = await generateText({
     model: ai("@cf/google/gemma-4-26b-a4b-it"),
     system:
-      "You are a helpful voice assistant. Keep responses concise — " +
+      "You are a helpful voice assistant. Keep responses concise - " +
       "you are being spoken aloud. Do not return Markdown or code blocks.",
     messages: [
       ...context.messages.map((m) => ({
@@ -373,23 +373,23 @@ async onTurn(transcript: string, context: VoiceTurnContext) {
       {
         type: "list",
         items: [
-          "createWorkersAI() connects the Vercel AI SDK to Workers AI models — no API keys needed",
+          "createWorkersAI() connects the Vercel AI SDK to Workers AI models - no API keys needed",
           "context.messages gives us SQLite-backed conversation history that survives reconnections",
           "context.signal aborts the LLM call if the user interrupts",
-          "We use generateText here for simplicity — you could use streamText for faster first-audio time",
+          "We use generateText here for simplicity - you could use streamText for faster first-audio time",
         ],
       },
       {
         type: "note",
         content:
-          "Model note: We're using @cf/google/gemma-4-26b-a4b-it — a fast, capable model on Workers AI. You can swap this for any Workers AI model.",
+          "Model note: We're using @cf/google/gemma-4-26b-a4b-it - a fast, capable model on Workers AI. You can swap this for any Workers AI model.",
       },
     ],
   },
 
   // ── 9: Add Tool Calls ─────────────────────────────────────────────────────
   {
-    title: "Step 4 — Add Tool Calls",
+    title: "Step 4 - Add Tool Calls",
     subtitle: "CRM integration with order lookup, returns, and product search",
     blocks: [
       {
@@ -461,14 +461,14 @@ const ecomTools = {
       {
         type: "note",
         content:
-          "stepCountIs(5) caps tool-call iterations at 5 to prevent runaway loops. The LLM might need multiple steps — call a tool, get the result, then call another tool or generate the final response.",
+          "stepCountIs(5) caps tool-call iterations at 5 to prevent runaway loops. The LLM might need multiple steps - call a tool, get the result, then call another tool or generate the final response.",
       },
     ],
   },
 
   // ── 10: System Prompt ─────────────────────────────────────────────────────
   {
-    title: "Step 4b — The System Prompt",
+    title: "Step 4b - The System Prompt",
     subtitle: "Teaching the LLM to handle voice transcripts",
     blocks: [
       {
@@ -482,10 +482,10 @@ const ecomTools = {
         filename: "worker/index.ts",
         content: `const SYSTEM_PROMPT = \`You are a friendly customer support voice assistant for Acme Inc, an online store.
 
-You have tools to look up orders, start returns, and check product availability. USE THEM — do not make up info.
+You have tools to look up orders, start returns, and check product availability. USE THEM - do not make up info.
 
 
-IMPORTANT — SPEECH-TO-TEXT:
+IMPORTANT - SPEECH-TO-TEXT:
 Users speak their order number, so transcripts contain spoken words not digits.
 Order IDs look like "ORD-" followed by 4 digits (e.g. ORD-9831, ORD-8916).
 Convert spoken numbers to digits and prepend "ORD-" before calling tools:
@@ -494,7 +494,7 @@ Convert spoken numbers to digits and prepend "ORD-" before calling tools:
 If the user only says digits without "ORD", still format as "ORD-XXXX".
 
 Keep responses SHORT and conversational. After tool results, summarize naturally.
-Don't read out full addresses or long lists — give the key info.
+Don't read out full addresses or long lists - give the key info.
 Do not return Markdown or code blocks in your responses.\`;`,
       },
     ],
@@ -502,7 +502,7 @@ Do not return Markdown or code blocks in your responses.\`;`,
 
   // ── 11: Build the React Client ────────────────────────────────────────────
   {
-    title: "Step 5 — Build the React Client",
+    title: "Step 5 - Build the React Client",
     subtitle: "The voice UI with useVoiceAgent hook",
     blocks: [
       {
@@ -529,7 +529,7 @@ Do not return Markdown or code blocks in your responses.\`;`,
       },
       {
         type: "heading",
-        content: "The useVoiceAgent hook — the entire client API",
+        content: "The useVoiceAgent hook - the entire client API",
       },
       {
         type: "code",
@@ -575,11 +575,11 @@ function App() {
       {
         type: "list",
         items: [
-          'useVoiceAgent({ agent: "VoiceAgent" }) — agent name must match the exported class name. The hook auto-converts PascalCase → kebab-case for the URL',
-          "status cycles: idle → listening → thinking → speaking → listening — this is all you need for UI state",
-          "transcript is an array of finalized messages — both user and agent",
+          'useVoiceAgent({ agent: "VoiceAgent" }) - agent name must match the exported class name. The hook auto-converts PascalCase → kebab-case for the URL',
+          "status cycles: idle → listening → thinking → speaking → listening - this is all you need for UI state",
+          "transcript is an array of finalized messages - both user and agent",
           "interimTranscript shows what the STT model is hearing in real-time",
-          "audioLevel gives a 0–1 value for mic volume — great for visualizations",
+          "audioLevel gives a 0–1 value for mic volume - great for visualizations",
         ],
       },
     ],
@@ -587,7 +587,7 @@ function App() {
 
   // ── 12: Run and Test ──────────────────────────────────────────────────────
   {
-    title: "Step 6 — Run and Test",
+    title: "Step 6 - Run and Test",
     subtitle: "Start the dev server and try it out",
     blocks: [
       {
@@ -607,9 +607,9 @@ function App() {
       {
         type: "list",
         items: [
-          '"What\'s the status of order ORD-9831?" — triggers lookup_order tool',
-          '"I\'d like to return order ORD-8916, it was damaged" — triggers request_return tool',
-          '"Do you have wireless headphones in stock?" — triggers check_product_availability tool',
+          '"What\'s the status of order ORD-9831?" - triggers lookup_order tool',
+          '"I\'d like to return order ORD-8916, it was damaged" - triggers request_return tool',
+          '"Do you have wireless headphones in stock?" - triggers check_product_availability tool',
         ],
       },
       {
@@ -629,14 +629,14 @@ function App() {
       {
         type: "note",
         content:
-          "Even in local dev, the AI binding hits remote Cloudflare APIs. You need valid Cloudflare auth (wrangler login) and will incur usage — but it's included in the free plan.",
+          "Even in local dev, the AI binding hits remote Cloudflare APIs. You need valid Cloudflare auth (wrangler login) and will incur usage - but it's included in the free plan.",
       },
     ],
   },
 
   // ── 13: Deploy ────────────────────────────────────────────────────────────
   {
-    title: "Step 7 — Deploy to Cloudflare",
+    title: "Step 7 - Deploy to Cloudflare",
     subtitle: "Ship it globally",
     blocks: [
       {
@@ -689,10 +689,10 @@ function App() {
       {
         type: "list",
         items: [
-          "Single WebSocket — all audio and messages flow over one connection",
-          "Continuous STT — audio streams continuously; the model decides when the user is done speaking",
-          "Conversation persistence — context.messages is backed by SQLite; history survives reconnections",
-          "Interruption support — if the user speaks while the agent is responding, context.signal aborts the LLM",
+          "Single WebSocket - all audio and messages flow over one connection",
+          "Continuous STT - audio streams continuously; the model decides when the user is done speaking",
+          "Conversation persistence - context.messages is backed by SQLite; history survives reconnections",
+          "Interruption support - if the user speaks while the agent is responding, context.signal aborts the LLM",
         ],
       },
     ],
@@ -705,7 +705,7 @@ function App() {
     blocks: [
       {
         type: "heading",
-        content: "Pipeline hooks — intercept and transform data",
+        content: "Pipeline hooks - intercept and transform data",
       },
       {
         type: "code",
