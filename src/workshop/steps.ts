@@ -4,7 +4,13 @@ export type ContentBlock =
   | { type: "note"; content: string }
   | { type: "heading"; content: string }
   | { type: "list"; items: string[] }
-  | { type: "diagram"; content: string };
+  | { type: "diagram"; content: string }
+  | { type: "intro"; name: string; role: string; photo: string }
+  | {
+      type: "resources";
+      qrUrl: string;
+      links: { label: string; url: string; icon?: string }[];
+    };
 
 export interface Step {
   title: string;
@@ -13,7 +19,20 @@ export interface Step {
 }
 
 export const steps: Step[] = [
-  // ── 0: Workshop Overview ──────────────────────────────────────────────────
+  // ── 0: Intro ───────────────────────────────────────────────────────────────
+  {
+    title: "Building Voice Agents with the Cloudflare Agents SDK",
+    blocks: [
+      {
+        type: "intro",
+        name: "Fayaz Ahmed",
+        role: "Sr. Developer Educator at Cloudflare",
+        photo: "https://github.com/fayazara.png",
+      },
+    ],
+  },
+
+  // ── 1: Workshop Overview ──────────────────────────────────────────────────
   {
     title: "Building Voice Agents with the Cloudflare Agents SDK",
     subtitle: "Workshop Overview",
@@ -759,21 +778,50 @@ export class DictationAgent extends InputAgent<Env> {
     ],
   },
 
-  // ── 15: Resources ─────────────────────────────────────────────────────────
+  // ── 15: Resources & Links ──────────────────────────────────────────────────
   {
-    title: "Resources",
-    subtitle: "Further reading and documentation",
+    title: "Thank You!",
+    subtitle: "Resources & Links",
     blocks: [
       {
-        type: "list",
-        items: [
-          "Cloudflare Voice Agent Docs — developers.cloudflare.com/agents/guides/build-a-voice-agent/",
-          "Voice API Reference — developers.cloudflare.com/agents/api-reference/voice/",
-          "Blog Post: \"Add voice to your agent\" — blog.cloudflare.com/voice-agents/",
-          "Agents SDK GitHub — github.com/cloudflare/agents",
-          "Vercel AI SDK Docs — sdk.vercel.ai/docs",
-          "Workers AI Models — developers.cloudflare.com/workers-ai/models/",
-          "Durable Objects Docs — developers.cloudflare.com/durable-objects/",
+        type: "resources",
+        qrUrl: "https://voice-agent.fayaz.workers.dev/#/workshop/14",
+        links: [
+          {
+            label: "GitHub Codebase",
+            url: "https://github.com/fayazara/voice-agents-workshop",
+            icon: "github",
+          },
+          {
+            label: "Live Demo",
+            url: "https://voice-agent.fayaz.workers.dev",
+            icon: "globe",
+          },
+          {
+            label: "Voice Agents Documentation",
+            url: "https://developers.cloudflare.com/agents/api-reference/voice/",
+            icon: "doc",
+          },
+          {
+            label: "Blog: Voice Agents",
+            url: "https://blog.cloudflare.com/voice-agents/",
+            icon: "doc",
+          },
+          {
+            label: "github.com/fayazara",
+            url: "https://github.com/fayazara",
+            icon: "github",
+          },
+          {
+            label: "x.com/fayazara",
+            url: "https://x.com/fayazara",
+            icon: "twitter",
+          },
+          {
+            label: "LinkedIn",
+            url: "https://www.linkedin.com/in/fayaz-aralikatti/",
+            icon: "linkedin",
+          },
         ],
       },
     ],
