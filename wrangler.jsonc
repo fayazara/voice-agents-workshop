@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "voice-agent-workshop",
+  "name": "voice-agent",
   "main": "worker/index.ts",
   "compatibility_date": "2026-04-16",
   "assets": {
